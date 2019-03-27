@@ -1,0 +1,27 @@
+////
+//  This is the actual datastructure protos file.
+//  From this file actual service definition file would get generated.
+//  To generate that someone has to follow below steps :
+//
+////
+
+syntax = "proto3";
+
+package CustomerInfoSvc;
+
+import "Customer.proto";
+
+// CustomerInfoSvcRequest defines what input to take as request from client.
+message CustomerInfoSvcRequest {
+    int64 customerId = 1;
+}
+
+// CustomerInfoSvcResponse defines what serialize response to send back from the service.
+message CustomerInfoSvcResponse {
+    Customer customer = 1;
+}
+
+// CustomerInfoSvc holds actual service definition which would give back actual information.
+service CustomerInfoSvc {
+    rpc getCustomerInformation(CustomerInfoSvcRequest) returns (CustomerInfoSvcResponse) {}
+}

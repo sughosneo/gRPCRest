@@ -1,11 +1,15 @@
+'''
+    This is the gRPC CustomerInfoSvc server file which holds the implementation of
+    getCustomerInformation() method.
+'''
 import grpc
 from concurrent import futures
 import time
 
 # Importing compiled protobuf related files.
-import gRPCRest.src.api.gRPC.protos.CustomerInfoSvc_pb2 as CustomerInfoSvc_pb2
-import gRPCRest.src.api.gRPC.protos.CustomerInfoSvc_pb2_grpc as CustomerInfoSvc_pb2_grpc
-
+import CustomerInfoSvc_pb2
+import CustomerInfoSvc_pb2_grpc
+import Customer_pb2
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
@@ -21,7 +25,13 @@ class CustomerInformation(CustomerInfoSvc_pb2_grpc.CustomerInfoSvcServicer):
 
             context.set_details("Customer information found !")
             context.set_code(grpc.StatusCode.OK)
-            return CustomerInfoSvc_pb2.CustomerInfoSvcResponse.Customer
+
+            customerDetails = Customer_pb2.Customer()
+            customerDetails.firstName = "Sumit"
+            customerDetails.lastName = "Ghosh"
+            customerDetails.emailId = "abc@foo.com"
+
+            return CustomerInfoSvc_pb2.CustomerInfoSvcResponse(customer=customerDetails)
 
         else:
 
@@ -34,7 +44,9 @@ def serve():
 
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     CustomerInfoSvc_pb2_grpc.add_CustomerInfoSvcServicer_to_server(CustomerInformation(), server)
-    server.add_insecure_port('[::]:50051')
+    print("gRPC server is starting...")
+    print("Listening on - rpc://0.0.0.0:50051",)
+    server.add_insecure_port('0.0.0.0:50051')
     server.start()
 
     try:

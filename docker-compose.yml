@@ -1,0 +1,25 @@
+version: "3"
+services:
+
+  gRPC:
+    image: ubuntu:18.04
+    build:
+      context: .
+      dockerfile: Dockerfile-gRPC
+    ports:
+      - "50051"
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+  rest:
+    image: ubuntu:18.04
+    build:
+      context: .
+      dockerfile: Dockerfile-rest
+    ports:
+      - "8000"
+    deploy:
+      restart_policy:
+        condition: on-failure
+

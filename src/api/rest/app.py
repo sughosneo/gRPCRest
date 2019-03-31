@@ -1,41 +1,89 @@
+'''
+    This app.py script would act as the rest API server.
+    It has been written based on falcon rest framework.
+
+    - After fetching the params from the get request it actually makes a call to gRPC server to fetch the result.
+'''
+
 import json
 from wsgiref import simple_server
 import falcon
 import requests
 
-from TaskRequestMgrObjModel import *
-from UtilityHelper import *
+# gRPC related imports
+from ..gRPC.CustomerInfoSvc_pb2 import *
+from ..gRPC.CustomerInfoSvc_pb2_grpc import *
+
+# Library to format any protobuf to json or back to protobuf.
+from google.protobuf.json_format import json_format
 
 class CustomerManagerResource:
 
-    def on_get(self, req, resp):
+    '''
+        only on_get() method has been implemented.
+    '''
+    def on_get(self, req, resp,customer_id):
 
         try:
 
+            # This is the parameter which is going to get passed.
+            customerId = customer_id
+            customerPersonalInfo = self.__getCustomerPersonInfo(customerId)
+
             resp.status = falcon.HTTP_200
-            customerPersonalInfo = self.__getCustomerPersonInfo()
-            resp.body = json.dumps({"result":"success","description" : "Task has been created successfully !"})
+            resp.content_type = falcon.MEDIA_JSON
+            resp.body = json.dumps({"result":"success","details" : customerPersonalInfo})
 
         except Exception as error:
 
             print(error)
             resp.status = falcon.HTTP_500
-            resp.body = json.dumps({"result" : "failed", "description" : falcon.HTTPInternalServerError("Unable to create task")})
+            resp.body = json.dumps({"result" : "failed", "details" : falcon.HTTPInternalServerError("Unable to create task")})
 
-    def __getCustomerPersonInfo(self):
+    '''
+        This method would actually talk to the gRPC server to fetch the customer details.        
+    '''
+    def __getCustomerPersonInfo(self,customerId):
 
-        try:
-            pass
-        except Exception as error:
-            print(error)
+        if customerId :
+
+            channel = grpc.insecure_channel('0.0.0.0:50051')
+
+            stub = CustomerInfoSvc_pb2_grpc.CustomerInfoSvcStub(channel)
+
+            try:
+
+                # As the gRPC is going to accept a int params. So typecasting it before sending the actual request.
+                # If any other integer value been passed apart from 777 it would throw the error.
+                response = stub.getCustomerInformation(CustomerInfoSvc_pb2.CustomerInfoSvcRequest(customerId=int(customerId)))
+                print(response)
+                print("Converting this response Customer obj to json !")
+                return json_format.MessageToJson(response.customer)
+
+            except grpc.RpcError as e:
+
+                print(e.details())
+                # Let's access the error code, which is `INVALID_ARGUMENT`
+                # `type` of `status_code` is `grpc.StatusCode`
+                status_code = e.code()
+                # should print `INVALID_ARGUMENT`
+                print(status_code.name)
+                print(status_code.value)
+
+                # If you want to perform any specific action.
+                if grpc.StatusCode.INVALID_ARGUMENT == status_code:
+                    # You can incorporate your customer module in here.
+                    print("INVALID_ARGUMENT - error has come up !")
+        else:
+            raise Exception(falcon.HTTPInvalidParam("customer_id params value is not correct !"))
 
 
 appManager = falcon.API()
 customerMgrResourceObj = CustomerManagerResource()
-appManager.add_route("/manage/customer/info",customerMgrResourceObj)
+appManager.add_route("/manage/customer/{customer_id}/info",customerMgrResourceObj)
 
 
 if __name__ == '__main__':
-    httpd = simple_server.make_server('localhost', 8000, appManager)
-    print("API has been started and listening on http://0.0.0.0:8000/manage/customer/info")
+    httpd = simple_server.make_server('0.0.0.0', 8000, appManager)
+    print("API has been started and listening on http://0.0.0.0:8000/manage/customer/{customer_id}/info")
     httpd.serve_forever()

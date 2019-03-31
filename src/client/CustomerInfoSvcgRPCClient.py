@@ -1,19 +1,27 @@
+'''
+
+    This is the sample client script which would talk to the gRPC server directly
+        and get the response back based on the request params.
+
+'''
 import grpc
 
 # Importing compiled protobuf related files.
-import gRPCRest.src.api.gRPC.protos.CustomerInfoSvc_pb2 as CustomerInfoSvc_pb2
-import gRPCRest.src.api.gRPC.protos.CustomerInfoSvc_pb2_grpc as CustomerInfoSvc_pb2_grpc
-
+from ..api.gRPC.CustomerInfoSvc_pb2 import *
+from ..api.gRPC.CustomerInfoSvc_pb2_grpc import *
+from google.protobuf.json_format import json_format
 def run():
 
     channel = grpc.insecure_channel('localhost:50051')
-    stub = CustomerInfoSvc_pb2_grpc.CustomerInfoSvc_pb2_grpc(channel)
+    stub = CustomerInfoSvc_pb2_grpc.CustomerInfoSvcStub(channel)
 
     try:
 
         # If any other integer value been passed apart from 777 it would throw the error.
-        response = stub.SayHelloStrict(CustomerInfoSvc_pb2.CustomerInfoSvcRequest(customerId=777))
-        print(response.Result)
+        response = stub.getCustomerInformation(CustomerInfoSvc_pb2.CustomerInfoSvcRequest(customerId=777))
+        print(response)
+        print("Converting this response Customer obj to json !")
+        print(json_format.MessageToJson(response.customer))
 
     except grpc.RpcError as e:
 
@@ -28,7 +36,7 @@ def run():
         # If you want to perform any specific action.
         if grpc.StatusCode.INVALID_ARGUMENT == status_code:
             # You can incorporate your customer module in here.
-            pass
+            print("INVALID_ARGUMENT - error has come up !")
 
 if __name__ == '__main__':
     run()

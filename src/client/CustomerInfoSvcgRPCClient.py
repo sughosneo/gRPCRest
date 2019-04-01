@@ -7,9 +7,12 @@
 import grpc
 
 # Importing compiled protobuf related files.
-from ..api.gRPC.CustomerInfoSvc_pb2 import *
-from ..api.gRPC.CustomerInfoSvc_pb2_grpc import *
-from google.protobuf.json_format import json_format
+# This files are required in both client and server side.
+import CustomerInfoSvc_pb2 as CustomerInfoSvc_pb2
+import CustomerInfoSvc_pb2_grpc as CustomerInfoSvc_pb2_grpc
+
+from google.protobuf import json_format
+
 def run():
 
     channel = grpc.insecure_channel('localhost:50051')

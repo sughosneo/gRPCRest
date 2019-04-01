@@ -5,17 +5,19 @@
     - After fetching the params from the get request it actually makes a call to gRPC server to fetch the result.
 '''
 
+import grpc
+
 import json
 from wsgiref import simple_server
 import falcon
 import requests
 
-# gRPC related imports
-from ..gRPC.CustomerInfoSvc_pb2 import *
-from ..gRPC.CustomerInfoSvc_pb2_grpc import *
+# gRPC related class files which needs to be imported in both server and client side.
+import CustomerInfoSvc_pb2 as CustomerInfoSvc_pb2
+import CustomerInfoSvc_pb2_grpc as CustomerInfoSvc_pb2_grpc
 
 # Library to format any protobuf to json or back to protobuf.
-from google.protobuf.json_format import json_format
+from google.protobuf import json_format
 
 class CustomerManagerResource:
 
